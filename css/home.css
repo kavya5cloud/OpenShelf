@@ -74,9 +74,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .notice-item[aria-hidden="true"] { opacity: 0; transform: translateY(6px); pointer-events: none; }
 .notice b { display: block; font-weight: 500; font-size: 16px; letter-spacing: -.01em; }
 .notice span { display: block; font-size: 14px; color: var(--mute); }
-.dots { display: flex; gap: 5px; }
-.dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--ink); opacity: .22; transition: opacity .3s, width .3s; }
-.dots i.on { opacity: .75; }
 
 /* ---------- headline ---------- */
 .headline {
@@ -120,7 +117,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   box-shadow: 0 2px 4px rgba(40, 30, 110, .35);
 }
 .ledge::before { left: 30px; }
-.ledge::after { left: calc(30px + 3 * (var(--bw) + var(--gap))); }
+.ledge::after { right: 30px; }
 
 /* ---------- category tabs ---------- */
 .tabs {

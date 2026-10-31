@@ -25,10 +25,9 @@
       <div class="notice" aria-live="polite">
         <svg width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true"><path d="M2 9h7M4 15h6M2 21h7" stroke="#0E0D14" stroke-width="2" stroke-linecap="round"/><path d="M19.5 3 12 16.5h6.5L16 27l9-13.5h-6.5L21 3z" fill="#0E0D14"/></svg>
         <div class="notice-body" id="notice"></div>
-        <div class="dots" id="dots" aria-hidden="true"></div>
       </div>
 
-      <h1 class="headline" id="headline">Your Campus Library, One Tap Away</h1>
+      <h1 class="headline">The Whole Library, In Your Pocket</h1>
 
       <div class="shelf-head">
         <h2 id="shelfTitle">All books</h2>
@@ -116,7 +115,6 @@
     const popular = books.slice().sort((a, b) => (loans[b.id] || 0) - (loans[a.id] || 0));
     const cats = ['All', ...new Set(books.map((b) => b.category))];
     const inCat = (c) => (c === 'All' ? popular : popular.filter((b) => b.category === c));
-    const ready = books.filter((b) => b.available > 0).length;
     const m = new Date().getMonth();
     const season = m >= 2 && m <= 4 ? 'Spring' : m >= 5 && m <= 7 ? 'Summer' : m >= 8 && m <= 10 ? 'Autumn' : 'Winter';
 
@@ -134,8 +132,6 @@
     }
 
     // ---------- headline, shelf, tabs ----------
-    $('#headline').innerHTML = `You Have <span class="num">${ready}</span> Books Ready to Borrow`;
-
     $('#tabs').innerHTML = cats.map((c) => `<button type="button" data-cat="${esc(c)}" aria-pressed="false">${esc(c)} <span class="count">${inCat(c).length}</span></button>`).join('');
     let cat = 'All';
     function setCat(c) {
@@ -175,13 +171,11 @@
       [`${total} loans and counting`, 'Join the students and faculty already reading']
     ];
     $('#notice').innerHTML = notes.map((n, i) => `<div class="notice-item" aria-hidden="${i !== 0}"><b>${esc(n[0])}</b><span>${esc(n[1])}</span></div>`).join('');
-    $('#dots').innerHTML = notes.map((_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('');
     let ni = 0;
     setInterval(() => {
       if (document.hidden) return;
       ni = (ni + 1) % notes.length;
       OS.$$('#notice .notice-item').forEach((el, i) => el.setAttribute('aria-hidden', String(i !== ni)));
-      OS.$$('#dots i').forEach((el, i) => el.classList.toggle('on', i === ni));
     }, 4500);
 
     // ---------- signed in already: send them to the app ----------
