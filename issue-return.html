@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenShelf — Issue / Return</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="content" id="content">
+    <div class="page-head">
+      <div class="titles"><h1>Issue / Return</h1><p class="muted">Type or scan the member ID and book ID.</p></div>
+      <div class="segmented" role="tablist" aria-label="Mode">
+        <button type="button" role="tab" id="tabIssue" aria-selected="true" aria-controls="issuePanel">Issue book</button>
+        <button type="button" role="tab" id="tabReturn" aria-selected="false" aria-controls="returnPanel">Return book</button>
+      </div>
+    </div>
+
+    <!-- ISSUE -->
+    <section id="issuePanel" role="tabpanel" aria-labelledby="tabIssue" class="row">
+      <form class="card grow-1" id="issueForm" novalidate style="flex:1 1 380px">
+        <h2>Details</h2>
+        <div class="field">
+          <label for="iMember">Member ID</label>
+          <input class="input" id="iMember" list="memberList" placeholder="e.g. 24BCS001 or FAC-1024" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="iBook">Book ID or ISBN</label>
+          <input class="input" id="iBook" list="bookList" placeholder="e.g. BK-001" autocomplete="off">
+        </div>
+        <p class="hint" id="ruleHint">Students: 4 books for 14 days · Faculty: 10 books for 30 days · Late fine ₹5/day</p>
+        <p class="error-text" id="issueError" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" type="submit">Confirm issue</button>
+      </form>
+      <div class="grow-1" style="flex:1 1 380px;display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div id="memberPreview"></div>
+        <div id="bookPreview"></div>
+      </div>
+    </section>
+
+    <!-- RETURN -->
+    <section id="returnPanel" role="tabpanel" aria-labelledby="tabReturn" hidden style="display:flex;flex-direction:column;gap:20px">
+      <form class="card" id="returnForm" novalidate style="flex-direction:row;align-items:flex-end;flex-wrap:wrap">
+        <div class="field" style="flex:1 1 300px">
+          <label for="rMember">Member ID</label>
+          <input class="input" id="rMember" list="memberList" placeholder="e.g. 24BCS001" autocomplete="off">
+        </div>
+        <button class="btn btn-primary" type="submit" style="height:46px">Find issued books</button>
+      </form>
+      <div id="returnList"></div>
+    </section>
+
+    <datalist id="memberList"></datalist>
+    <datalist id="bookList"></datalist>
+  </main>
+
+  <script src="js/store.js"></script>
+  <script src="js/audiobooks.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/issue-return.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenShelf — Reports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="content" id="content">
+    <div class="page-head">
+      <div class="titles"><h1>Reports</h1><p class="muted" id="periodText">Library activity</p></div>
+      <div class="actions no-print">
+        <div class="segmented" role="tablist" aria-label="Period" id="periods">
+          <button type="button" role="tab" data-p="week" aria-selected="false">Week</button>
+          <button type="button" role="tab" data-p="month" aria-selected="true">Month</button>
+          <button type="button" role="tab" data-p="semester" aria-selected="false">6 months</button>
+        </div>
+        <button class="btn btn-primary" type="button" id="pdfBtn">Export PDF</button>
+        <button class="btn btn-outline" type="button" id="csvBtn">Export CSV</button>
+      </div>
+    </div>
+    <section class="grid stats" id="kpis" aria-label="Totals"></section>
+    <div class="row">
+      <section class="card grow-2" aria-labelledby="trendH">
+        <h2 id="trendH">Books issued per month</h2>
+        <div class="bars" id="bars"></div>
+        <div class="bar-labels" id="barLabels" style="margin-top:-6px"></div>
+      </section>
+      <section class="card grow-1" aria-labelledby="catH">
+        <h2 id="catH">Borrowing by category</h2>
+        <div id="cats" style="display:flex;flex-direction:column;gap:14px"></div>
+      </section>
+    </div>
+    <div class="row">
+      <section class="card grow-2" aria-labelledby="topH">
+        <h2 id="topH">Most borrowed books</h2>
+        <div class="table-wrap" id="top"></div>
+      </section>
+      <section class="card grow-1" aria-labelledby="fineH">
+        <h2 id="fineH">Fines summary</h2>
+        <div id="fines" style="display:flex;flex-direction:column;gap:12px"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/store.js"></script>
+  <script src="js/audiobooks.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/reports.js"></script>
+</body>
+</html>

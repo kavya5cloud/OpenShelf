@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenShelf — Catalog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="content" id="content">
+    <div class="page-head">
+      <div class="titles"><h1 id="pageTitle">Book catalog</h1><p class="muted" id="countText">Loading…</p></div>
+      <div class="actions" id="headActions"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="search">
+        <span id="searchIcon"></span>
+        <label for="q" class="sr-only">Search catalog</label>
+        <input class="input" id="q" type="search" placeholder="Search title, author, ISBN or book ID">
+      </div>
+      <label for="sort" class="sr-only">Sort by</label>
+      <select class="input" id="sort" style="width:auto;flex:0 0 auto">
+        <option value="title">Sort: Title A–Z</option>
+        <option value="popular">Sort: Most borrowed</option>
+        <option value="newest">Sort: Newest edition</option>
+        <option value="available">Sort: Most available</option>
+      </select>
+      <label class="check" style="flex:0 0 auto;padding:0 6px"><input type="checkbox" id="availOnly">Available only</label>
+    </div>
+    <div class="chips" id="cats" role="group" aria-label="Category"></div>
+    <div class="book-grid" id="grid"></div>
+  </main>
+
+  <script src="js/store.js"></script>
+  <script src="js/audiobooks.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/catalog.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenShelf — Audiobooks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="content" id="content">
+    <div class="page-head">
+      <div class="titles"><h1>Audiobooks</h1><p class="muted">Listen to short spoken summaries of books in our library — read aloud by your browser, with the text highlighted as it plays.</p></div>
+    </div>
+    <p class="notice amber" id="noSpeech" hidden>Your browser doesn't support speech. Try Chrome or Edge — you can still read along below.</p>
+    <div class="row">
+      <section class="card grow-2 player" id="player" aria-label="Now playing">
+        <div class="now">
+          <div id="npCover"></div>
+          <div class="meta">
+            <span class="badge amber" style="align-self:flex-start;gap:8px"><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="npState">Ready to play</span></span>
+            <h2 id="npTitle" style="font-size:26px;font-weight:600"></h2>
+            <span class="muted" id="npAuthor"></span>
+            <span class="muted" style="font-size:13px" id="npInfo"></span>
+            <div class="progress" style="height:6px;margin-top:6px"><span id="npBar" style="width:0%"></span></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="round-btn" type="button" id="prevBtn" aria-label="Previous chapter"></button>
+          <button class="round-btn play" type="button" id="playBtn" aria-label="Play"></button>
+          <button class="round-btn" type="button" id="nextBtn" aria-label="Next chapter"></button>
+        </div>
+
+        <div class="speed-row">
+          <div class="segmented" role="group" aria-label="Speed" id="speeds">
+            <button type="button" data-r="0.8" aria-pressed="false">0.8×</button>
+            <button type="button" data-r="1" aria-pressed="true">1×</button>
+            <button type="button" data-r="1.25" aria-pressed="false">1.25×</button>
+            <button type="button" data-r="1.5" aria-pressed="false">1.5×</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex:1 1 220px;justify-content:flex-end">
+            <label for="voice" class="label" style="white-space:nowrap">Voice</label>
+            <select class="input" id="voice" style="max-width:260px;height:40px"></select>
+          </div>
+        </div>
+
+        <div>
+          <div class="card-head" style="margin-bottom:8px"><h2 id="chTitle" style="font-size:16px;font-weight:600"></h2><span class="hint">Click any sentence to jump there</span></div>
+          <div class="read-along" id="readAlong" aria-live="off"></div>
+        </div>
+
+        <div>
+          <h2 style="font-size:16px;font-weight:600;margin-bottom:8px">Chapters</h2>
+          <div class="chapters" id="chapters"></div>
+        </div>
+      </section>
+
+      <section class="grow-1" style="display:flex;flex-direction:column;gap:16px;min-width:0" aria-labelledby="libH">
+        <h2 id="libH">All audiobooks</h2>
+        <div class="audio-grid" id="library"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/store.js"></script>
+  <script src="js/audiobooks.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/audiobooks.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenShelf — Reservations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="content" id="content">
+    <div class="page-head">
+      <div class="titles"><h1>My reservations</h1><p class="muted">When a reserved book comes back, it's held for you for 2 days.</p></div>
+      <div class="actions"><a class="btn btn-primary" href="catalog.html">Reserve a book</a></div>
+    </div>
+    <div class="row">
+      <div class="grow-2" style="display:flex;flex-direction:column;gap:14px;min-width:0" id="list"></div>
+      <div class="grow-1" style="display:flex;flex-direction:column;gap:20px;min-width:0">
+        <section class="card" style="background:var(--primary-soft);border-color:var(--border-strong)" aria-labelledby="howH">
+          <h2 id="howH" style="color:var(--primary)">How reservations work</h2>
+          <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--text-2)">
+            <li>Reserve any book from the catalog.</li>
+            <li>If a copy is free, it's set aside for you right away.</li>
+            <li>If all copies are issued, you join a queue — first come, first served.</li>
+            <li>When it's your turn, you get a notification.</li>
+            <li>Collect it within 2 days, or it goes to the next person.</li>
+          </ol>
+        </section>
+        <section class="card" aria-labelledby="pastH">
+          <h2 id="pastH">Past reservations</h2>
+          <div id="past" style="display:flex;flex-direction:column;gap:8px"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/store.js"></script>
+  <script src="js/audiobooks.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/reservations.js"></script>
+</body>
+</html>

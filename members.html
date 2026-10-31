@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenShelf — Members</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="content" id="content">
+    <div class="page-head">
+      <div class="titles"><h1>Members</h1><p class="muted" id="countText">Students and faculty who can borrow books.</p></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="search">
+        <span id="searchIcon"></span>
+        <label for="q" class="sr-only">Search members</label>
+        <input class="input" id="q" type="search" placeholder="Search by name, ID or department">
+      </div>
+      <div class="segmented" role="group" aria-label="Role" id="roleFilter">
+        <button type="button" data-role="All" aria-pressed="true">All</button>
+        <button type="button" data-role="student" aria-pressed="false">Students</button>
+        <button type="button" data-role="faculty" aria-pressed="false">Faculty</button>
+      </div>
+      <label class="check" style="padding:0 6px"><input type="checkbox" id="duesOnly">With dues only</label>
+    </div>
+    <section class="card" style="padding:8px 16px">
+      <div class="table-wrap" id="table"></div>
+    </section>
+  </main>
+
+  <script src="js/store.js"></script>
+  <script src="js/audiobooks.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/members.js"></script>
+</body>
+</html>
