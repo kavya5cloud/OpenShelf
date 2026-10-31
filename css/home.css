@@ -104,11 +104,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* the frosted ledge the books stand behind */
 .ledge {
   position: absolute; pointer-events: none;
-  left: calc(var(--pad) - 18px); right: 0;
+  left: calc(var(--pad) - 18px); right: calc(var(--pad) - 18px);
   top: calc(10px + var(--bh) * .63); height: calc(var(--bh) * .27);
   background: linear-gradient(180deg, rgba(255, 255, 255, .38), rgba(205, 201, 252, .26));
   -webkit-backdrop-filter: blur(9px) saturate(1.5); backdrop-filter: blur(9px) saturate(1.5);
-  border-top: 1px solid rgba(255, 255, 255, .75); border-radius: 5px 0 0 5px;
+  border-top: 1px solid rgba(255, 255, 255, .75); border-radius: 6px;
   box-shadow: 0 24px 40px -22px rgba(72, 62, 170, .45), inset 0 -1px 0 rgba(255, 255, 255, .3);
 }
 .ledge::before, .ledge::after {
