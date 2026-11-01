@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenShelf — Admin sign in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth">
+    <section class="auth-side admin-side">
+      <a class="brand" href="index.html">
+        <span id="logoSlot"></span><span style="font-size:24px">OpenShelf</span>
+      </a>
+      <div style="display:flex;flex-direction:column;gap:20px;position:relative;z-index:1">
+        <span class="admin-tag"><span id="tagIcon"></span>Admin portal</span>
+        <h1>Run the whole library system from one place.</h1>
+        <p>Create and manage accounts for librarians, students and faculty, reset passwords, and see how the library is doing.</p>
+      </div>
+      <ul class="auth-points">
+        <li><span id="i1"></span>Add, edit and remove user accounts</li>
+        <li><span id="i2"></span>Reset passwords for any user</li>
+        <li><span id="i3"></span>View system-wide reports and rules</li>
+      </ul>
+    </section>
+
+    <div class="auth-form-wrap">
+      <form class="auth-form" id="loginForm" novalidate>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <h2 style="font-size:28px;font-weight:800">Administrator sign in</h2>
+          <p class="muted">Only for system administrators. Students, faculty and librarians use the <a href="login.html" style="font-weight:600">regular sign-in</a>.</p>
+        </div>
+
+        <div class="field">
+          <label for="uid">Admin ID</label>
+          <input class="input" id="uid" name="uid" autocomplete="username" placeholder="e.g. ADM-001" required>
+        </div>
+        <div class="field">
+          <label for="pwd">Password</label>
+          <input class="input" id="pwd" name="pwd" type="password" autocomplete="current-password" placeholder="••••••••" required>
+        </div>
+        <p class="error-text" id="loginError" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" type="submit" id="loginBtn">Log in as Administrator</button>
+
+        <div class="demo-box">Demo login: <code>ADM-001</code> / <code>superadmin123</code> <a href="#" id="fillDemo" style="font-weight:600;margin-left:4px">Fill it</a></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/audiobooks.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+  (function () {
+    const $ = OS.$;
+    const current = OS.session.get();
+    if (current && current.role === 'admin') { location.replace('dashboard.html'); return; }
+
+    $('#logoSlot').outerHTML = OS.logo(40);
+    $('#tagIcon').outerHTML = OS.icon('shield', 16);
+    $('#i1').outerHTML = '<span style="color:var(--primary)">' + OS.icon('users', 22) + '</span>';
+    $('#i2').outerHTML = '<span style="color:var(--primary)">' + OS.icon('key', 22) + '</span>';
+    $('#i3').outerHTML = '<span style="color:var(--primary)">' + OS.icon('chart', 22) + '</span>';
+
+    $('#fillDemo').addEventListener('click', (e) => { e.preventDefault(); $('#uid').value = 'ADM-001'; $('#pwd').value = 'superadmin123'; });
+
+    $('#loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = $('#loginError');
+      err.hidden = true;
+      const id = $('#uid').value.trim(), pwd = $('#pwd').value;
+      if (!id || !pwd) { err.textContent = 'Please enter your admin ID and password.'; err.hidden = false; return; }
+      try {
+        const user = await OS.api.login(id, pwd, 'admin');
+        OS.session.set(user);
+        location.href = 'dashboard.html';
+      } catch (ex) {
+        err.textContent = ex.message; err.hidden = false;
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

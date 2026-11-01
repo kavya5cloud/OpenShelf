@@ -5,7 +5,7 @@ Errors should return a 4xx status with `{ "message": "Human readable reason" }`.
 
 ## Database tables
 
-**users**: `id` (PK, e.g. 24BCS001 / FAC-1024 / LIB-001), `password` (hashed!), `role` (librarian | student | faculty), `name`, `dept`, `email`
+**users**: `id` (PK, e.g. 24BCS001 / FAC-1024 / LIB-001), `password` (hashed!), `role` (admin | librarian | student | faculty), `name`, `dept`, `email`
 
 **books**: `id` (PK, BK-001), `isbn`, `title`, `author`, `category`, `total`, `available`, `shelf`, `year`, `color`, `addedOn`
 
@@ -54,6 +54,14 @@ Dates are `YYYY-MM-DD` strings.
 | DELETE | `/api/reservations/:id` | `{ userId }` | reservation |
 | GET | `/api/dashboard` | | librarian dashboard numbers |
 | GET | `/api/reports` | `?period=week\|month\|semester` | report |
+| GET | `/api/admin/overview` | | admin dashboard numbers |
+| GET | `/api/admin/users` | `?q=&role=` | user[] (+ `activeLoans`) |
+| POST | `/api/admin/users` | `{ id, name, role, dept, email, password }` | user |
+| PUT | `/api/admin/users/:id` | `{ name, role, dept, email }` | user |
+| POST | `/api/admin/users/:id/reset-password` | `{ password }` | `true` |
+| DELETE | `/api/admin/users/:id` | | `{ deleted }` (blocked if books issued or fines unpaid) |
+
+**Login rule:** `/api/auth/login` with `role: "admin"` only accepts admin accounts, and admin accounts can only sign in with `role: "admin"` (from `admin-login.html`). All `/api/admin/*` endpoints must check that the caller is an admin.
 
 **Member stats** fields: `issuedCount, overdueCount, unpaidFine, accruingFine, totalDue, limit, loanDays, totalBorrowed`.
 

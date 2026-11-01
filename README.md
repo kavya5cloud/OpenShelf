@@ -1,6 +1,6 @@
 # OpenShelf — Library Management System (Frontend)
 
-A role-based library management system for colleges. The **librarian**, **students** and **faculty** each get their own dashboard.
+A role-based library management system for colleges. The **administrator**, **librarian**, **students** and **faculty** each get their own dashboard.
 
 Built with plain **HTML, CSS and JavaScript** in a warm "reading room" design,: no framework and no build step. It works fully right now using a **dummy database** that is saved in the browser (localStorage). When the backend is ready, only `js/api.js` needs to change.
 
@@ -8,6 +8,7 @@ Built with plain **HTML, CSS and JavaScript** in a warm "reading room" design,: 
 
 | Role      | ID         | Password     |
 |-----------|------------|--------------|
+| Admin     | `ADM-001`  | `superadmin123` (sign in at `admin-login.html`) |
 | Librarian | `LIB-001`  | `admin123`   |
 | Student   | `24BCS001` | `student123` |
 | Faculty   | `FAC-1024` | `faculty123` |
@@ -30,6 +31,13 @@ More students: `24BCS014`, `24BCE027`, `23BME009`, `24BIT033`, `25BCS041` (all `
 - **Online renewal**: once per book, only if it isn't overdue and nobody is waiting for it
 - **Due-date reminders**: shown when a book is due within 2 days
 - Borrowing history with fine status
+
+**Administrator** (separate login page: `admin-login.html`, linked from the sign-in page)
+- Admin dashboard: total accounts, accounts by role, books, overdue loans, dues and library rules
+- **User management**: add, edit and delete accounts for librarians, students, faculty and other admins, with validation (unique ID and email, valid email, letters-only names)
+- **Reset password** for any user
+- Safety checks: can't delete yourself, can't remove the last admin, can't delete or change the role of a user who still has books or unpaid fines
+- Can also manage books and view reports
 
 **Librarian**
 - Dashboard: totals, today's activity, overdue list, books ready for pickup, "Send reminders"
