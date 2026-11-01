@@ -1,5 +1,6 @@
 // OpenShelf API: one Vercel Function serves every /api/* route (vercel.json
-// rewrites /api/<path> to /api?__path=<path>). Routes and shapes follow API.md.
+// rewrites /api/<path> to /api; the request keeps its original URL, so the
+// route is read from it). Routes and shapes follow API.md.
 //
 // Who can call what:
 //   public     anyone (the catalog is browsable before logging in)
@@ -81,8 +82,8 @@ function send(res, status, data) {
 
 export default async function handler(req, res) {
   const url = new URL(req.url, 'http://localhost');
-  const path = '/' + (url.searchParams.get('__path') ?? url.pathname.replace(/^\/api\/?/, '')).replace(/^\/+|\/+$/g, '');
-  url.searchParams.delete('__path');
+  const path = '/' + url.pathname.replace(/^\/api\/?/, '').replace(/^\/+|\/+$/g, '');
+  url.searchParams.delete('path'); // Vercel adds the rewrite's :path as a query parameter
 
   let params = null;
   const route = routes.find((r) => {
