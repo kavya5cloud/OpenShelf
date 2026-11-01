@@ -13,7 +13,7 @@ window.OS = window.OS || {};
   // Call at the top of every protected page. Redirects to login if needed.
   OS.requireAuth = function (roles) {
     const u = OS.session.get();
-    if (!u) { location.replace('index.html#login'); return null; }
+    if (!u) { location.replace('login.html'); return null; }
     if (roles && !roles.includes(u.role)) { location.replace('dashboard.html'); return null; }
     return u;
   };
@@ -110,31 +110,31 @@ window.OS = window.OS || {};
   };
   NAV.librarian.splice(2, 0, ['audio', 'audiobooks.html', 'Audiobooks', 'headphones']);
 
-  // "Continue listening" card for the sidebar (uses audiobooks.js progress)
+  // "Continue listening" card for the sidebar (uses audiobooks.js progress).
+  // Drawn empty, then filled once the book's details arrive from the API.
   function continueCard(active) {
     if (active === 'audio' || !OS.audioProgress || !OS.AUDIOBOOKS) return '';
     const p = OS.audioProgress.get();
-    const ab = p.last && OS.AUDIOBOOKS[p.last];
-    const b = ab && OS.db().books.find((x) => x.id === p.last);
-    if (!b) return '';
-    const pct = OS.audioProgress.percent(p.last);
-    return `<a class="side-card" href="audiobooks.html#${OS.esc(b.id)}">
-      <span class="lbl">Continue listening</span>
-      ${OS.cover(b, 'lg')}
-      <span class="progress" aria-label="${pct}% listened"><span style="width:${pct}%"></span></span>
-    </a>`;
+    if (!p.last || !OS.AUDIOBOOKS[p.last]) return '';
+    return `<a class="side-card" id="continueCard" href="audiobooks.html#${OS.esc(p.last)}" hidden></a>`;
+  }
+  function fillContinueCard() {
+    const card = OS.$('#continueCard');
+    if (!card) return;
+    const id = OS.audioProgress.get().last;
+    OS.api.getBook(id).then((b) => {
+      const pct = OS.audioProgress.percent(id);
+      card.innerHTML = `<span class="lbl">Continue listening</span>
+        ${OS.cover(b, 'lg')}
+        <span class="progress" aria-label="${pct}% listened"><span style="width:${pct}%"></span></span>`;
+      card.hidden = false;
+    }).catch(() => {});
   }
 
   OS.shell = function (active) {
     const u = OS.session.get();
     const items = NAV[u.role === 'librarian' ? 'librarian' : 'member'];
     const content = OS.$('#content');
-    let badge = {};
-    if (u.role !== 'librarian') {
-      const db = OS.db();
-      const ready = db.reservations.filter((r) => r.userId === u.id && r.status === 'ready').length;
-      if (ready) badge.reservations = ready;
-    }
     const app = document.createElement('div');
     app.className = 'app';
     app.id = 'app';
@@ -142,11 +142,11 @@ window.OS = window.OS || {};
       <aside class="sidebar" id="sidebar">
         <a class="brand" href="dashboard.html">${OS.logo(36)}<span>OpenShelf</span></a>
         <nav class="nav" aria-label="Main">
-          ${items.map(([key, href, label, ic]) => `<a href="${href}" class="${key === active ? 'active' : ''}" ${key === active ? 'aria-current="page"' : ''}>${OS.icon(ic)}${label}${badge[key] ? `<span class="count">${badge[key]}</span>` : ''}</a>`).join('')}
+          ${items.map(([key, href, label, ic]) => `<a href="${href}" class="${key === active ? 'active' : ''}" ${key === active ? 'aria-current="page"' : ''}>${OS.icon(ic)}${label}</a>`).join('')}
         </nav>
         <div style="margin-top:auto;display:flex;flex-direction:column;gap:12px">
           ${continueCard(active)}
-          <a href="#" id="resetDemo" class="reset-link">${OS.icon('refresh', 16)}Reset demo data</a>
+          ${u.role === 'librarian' ? `<a href="#" id="resetDemo" class="reset-link">${OS.icon('refresh', 16)}Reset demo data</a>` : ''}
         </div>
         <div class="sidebar-user">
           <span class="avatar">${OS.esc(OS.initials(u.name))}</span>
@@ -164,12 +164,21 @@ window.OS = window.OS || {};
     app.querySelector('.main').appendChild(content);
 
     OS.$('#logoutBtn').addEventListener('click', OS.logout);
-    OS.$('#resetDemo').addEventListener('click', async (e) => {
+    if (OS.$('#resetDemo')) OS.$('#resetDemo').addEventListener('click', async (e) => {
       e.preventDefault();
-      if (await OS.confirm('Reset demo data?', 'All books, loans and reservations go back to the starting sample data.', 'Reset')) {
-        OS.resetDB(); location.reload();
+      if (await OS.confirm('Reset demo data?', 'All books, loans and reservations go back to the starting sample data — for everyone.', 'Reset')) {
+        try { await OS.api.resetDemo(); location.reload(); } catch (err) { OS.toast(err.message, 'error'); }
       }
     });
+    fillContinueCard();
+    // Badge on "Reservations" when a reserved book is waiting at the desk.
+    if (u.role !== 'librarian') {
+      OS.api.memberSummary(u.id).then((s) => {
+        const ready = s.reservations.filter((r) => r.status === 'ready').length;
+        const link = OS.$('#sidebar a[href="reservations.html"]');
+        if (ready && link) link.insertAdjacentHTML('beforeend', `<span class="count">${ready}</span>`);
+      }).catch(() => {});
+    }
     const menuBtn = OS.$('#menuBtn');
     menuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
