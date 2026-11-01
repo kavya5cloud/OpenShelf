@@ -1,4 +1,4 @@
-/* Dashboard — one page, two layouts: librarian vs student/faculty */
+/* Dashboard — one page, three layouts: admin, librarian, student/faculty */
 (function () {
   const me = OS.requireAuth();
   if (!me) return;
@@ -71,6 +71,59 @@
       OS.toast(`Reminder sent to ${d.overdue.length} member(s).`, 'success');
       rb.disabled = true;
     });
+  }
+
+  // ---------------- Admin ----------------
+  async function admin() {
+    const d = await OS.api.adminOverview();
+    const roleBar = (label, n, cls) => `
+      <div class="list-item">
+        <div class="info"><b style="font-size:14px">${label}</b><span class="muted" style="font-size:13px">${Math.round(n / (d.users || 1) * 100)}% of accounts</span></div>
+        <span class="badge ${cls}">${n}</span>
+      </div>`;
+    content.innerHTML = `
+      <div class="page-head">
+        <div class="titles"><h1>${greeting()}, Admin!</h1><p class="muted">Manage accounts and keep an eye on the whole library system.</p></div>
+        <div class="actions">
+          <a class="btn btn-outline" href="reports.html">${OS.icon('chart', 18)}Reports</a>
+          <a class="btn btn-primary" href="users.html?add=1">${OS.icon('plus', 18)}Add user</a>
+        </div>
+      </div>
+      <section class="grid stats" aria-label="System summary">
+        ${stat('users', '', 'Total accounts', d.users, `${d.students} students · ${d.faculty} faculty`)}
+        ${stat('shield', 'amber', 'Staff accounts', d.librarians + d.admins, `${d.librarians} librarian(s) · ${d.admins} admin(s)`)}
+        ${stat('book', 'green', 'Books in library', d.copies.toLocaleString('en-IN'), `${d.titles} titles · ${d.onLoan} on loan`)}
+        ${stat('alert', 'red', 'Overdue loans', d.overdue, d.finesPending ? `${OS.money(d.finesPending)} in dues pending` : 'No dues pending', d.overdue ? 'error-text' : '')}
+      </section>
+      <div class="row">
+        <section class="card grow-2" aria-labelledby="newUsersH">
+          <div class="card-head"><h2 id="newUsersH">Recently added accounts</h2><a href="users.html" style="font-size:14px;font-weight:600">Manage users</a></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>User</th><th>Role</th><th>Department</th></tr></thead>
+            <tbody>${d.latestUsers.map((u) => `
+              <tr>
+                <td><div class="cell-book"><span class="avatar">${esc(OS.initials(u.name))}</span><div><b>${esc(u.name)}</b><span class="muted" style="font-size:13px">${esc(u.id)} · ${esc(u.email)}</span></div></div></td>
+                <td><span class="badge ${OS.roleBadge(u.role)}">${OS.roleLabel(u.role)}</span></td>
+                <td class="muted">${esc(u.dept)}</td>
+              </tr>`).join('')}</tbody>
+          </table></div>
+        </section>
+        <div class="grow-1" style="display:flex;flex-direction:column;gap:20px;min-width:0">
+          <section class="card" aria-labelledby="rolesH">
+            <div class="card-head"><h2 id="rolesH">Accounts by role</h2><span class="badge gray">${d.users}</span></div>
+            ${roleBar('Students', d.students, 'blue')}
+            ${roleBar('Faculty', d.faculty, 'amber')}
+            ${roleBar('Librarians', d.librarians, 'green')}
+            ${roleBar('Administrators', d.admins, 'red')}
+          </section>
+          <section class="card" aria-labelledby="rulesH">
+            <div class="card-head"><h2 id="rulesH">Library rules</h2></div>
+            <div class="list-item"><div class="info"><b style="font-size:14px">Students</b><span class="muted" style="font-size:13px">Up to ${d.rules.student.maxBooks} books for ${d.rules.student.loanDays} days</span></div></div>
+            <div class="list-item"><div class="info"><b style="font-size:14px">Faculty</b><span class="muted" style="font-size:13px">Up to ${d.rules.faculty.maxBooks} books for ${d.rules.faculty.loanDays} days</span></div></div>
+            <div class="list-item"><div class="info"><b style="font-size:14px">Late fine</b><span class="muted" style="font-size:13px">${OS.money(d.rules.finePerDay)} per day · ${d.rules.maxRenewals} renewal per loan</span></div></div>
+          </section>
+        </div>
+      </div>`;
   }
 
   // ---------------- Student / Faculty ----------------
@@ -146,5 +199,5 @@
     OS.api.markNotificationsRead(me.id);
   }
 
-  (me.role === 'librarian' ? librarian() : member()).catch((e) => OS.toast(e.message, 'error'));
+  (me.role === 'admin' ? admin() : me.role === 'librarian' ? librarian() : member()).catch((e) => OS.toast(e.message, 'error'));
 })();

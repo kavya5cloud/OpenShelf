@@ -4,7 +4,7 @@
   if (!me) return;
   OS.shell('catalog');
   const $ = OS.$, esc = OS.esc;
-  const isLib = me.role === 'librarian';
+  const isLib = OS.isStaff(me); // librarian and admin can manage books
   const params = new URLSearchParams(location.search);
 
   const state = { q: params.get('q') || '', sort: params.get('sort') || 'title', category: 'All', availableOnly: false };

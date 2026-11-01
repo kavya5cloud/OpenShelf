@@ -1,6 +1,6 @@
 /* Reports — librarian analytics, CSV + PDF (print) export */
 (function () {
-  const me = OS.requireAuth(['librarian']);
+  const me = OS.requireAuth(['librarian', 'admin']);
   if (!me) return;
   OS.shell('reports');
   const $ = OS.$, esc = OS.esc;
