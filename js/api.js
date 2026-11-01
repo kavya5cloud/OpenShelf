@@ -25,6 +25,7 @@ window.OS = window.OS || {};
   const book = (id) => db().books.find((b) => b.id === id);
   const user = (id) => db().users.find((u) => u.id.toLowerCase() === String(id || '').trim().toLowerCase());
   const publicUser = (u) => u && ({ id: u.id, role: u.role, name: u.name, dept: u.dept, email: u.email });
+  const isMember = (u) => OS.isMember(u);
 
   // Optional: real backend (fill in BASE_URL and use http() inside the functions)
   OS.CONFIG = { BASE_URL: '' };
@@ -114,6 +115,20 @@ window.OS = window.OS || {};
     };
   }
 
+  // Validation shared by addUser / updateUser
+  const ROLES = ['admin', 'librarian', 'student', 'faculty'];
+  function checkUser(d, isNew) {
+    if (isNew && (!d.id || !/^[A-Za-z0-9-]{3,20}$/.test(d.id.trim()))) return 'ID must be 3–20 letters, numbers or dashes.';
+    if (!d.name || d.name.trim().length < 2) return 'Enter the full name.';
+    if (!/^[A-Za-z .'-]+$/.test(d.name.trim())) return 'Name can only contain letters, spaces, dots and dashes.';
+    if (!ROLES.includes(d.role)) return 'Pick a valid role.';
+    if (!d.dept || !d.dept.trim()) return 'Enter the department.';
+    if (!d.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) return 'Enter a valid email address.';
+    if (db().users.some((u) => u.email.toLowerCase() === d.email.trim().toLowerCase() && u.id.toLowerCase() !== String(d.id).trim().toLowerCase())) return 'This email is already used by another account.';
+    if (isNew && (!d.password || d.password.length < 6)) return 'Password must be at least 6 characters.';
+    return '';
+  }
+
   OS.fmtDate = (iso) => {
     if (!iso) return '—';
     const d = OS.parseISO(iso);
@@ -125,6 +140,8 @@ window.OS = window.OS || {};
     login(id, password, role) {
       const u = user(id);
       if (!u || u.password !== password) return fail('Wrong ID or password.');
+      if (u.role === 'admin' && role !== 'admin') return fail('Administrators sign in from the Admin login page.');
+      if (role === 'admin' && u.role !== 'admin') return fail('This account is not an administrator. Use the regular sign-in page.');
       if (role && u.role !== role) return fail(`This ID belongs to a ${u.role}. Pick the "${u.role}" role.`);
       return ok(publicUser(u));
     },
@@ -212,7 +229,7 @@ window.OS = window.OS || {};
       housekeeping();
       const s = q.trim().toLowerCase();
       return ok(db().users
-        .filter((u) => u.role !== 'librarian')
+        .filter(isMember)
         .filter((u) => role === 'All' || u.role === role)
         .filter((u) => !s || u.name.toLowerCase().includes(s) || u.id.toLowerCase().includes(s) || u.dept.toLowerCase().includes(s))
         .map((u) => ({ ...publicUser(u), ...memberStats(u) })));
@@ -222,7 +239,7 @@ window.OS = window.OS || {};
     getMember(id) {
       housekeeping();
       const u = user(id);
-      if (!u || u.role === 'librarian') return fail('No student or faculty member with that ID.');
+      if (!isMember(u)) return fail('No student or faculty member with that ID.');
       return ok({ ...publicUser(u), ...memberStats(u) });
     },
 
@@ -250,7 +267,7 @@ window.OS = window.OS || {};
     issueBook(userId, bookId) {
       housekeeping();
       const u = user(userId), b = book(bookId) || db().books.find((x) => x.isbn === String(bookId).trim());
-      if (!u || u.role === 'librarian') return fail('Enter a valid student or faculty ID.');
+      if (!isMember(u)) return fail('Enter a valid student or faculty ID.');
       if (!b) return fail('Enter a valid book ID or ISBN.');
       const st = memberStats(u);
       if (st.issuedCount >= st.limit) return fail(`${u.name} already has ${st.issuedCount} books — the ${u.role} limit is ${st.limit}.`);
@@ -314,7 +331,7 @@ window.OS = window.OS || {};
     reserve(userId, bookId) {
       housekeeping();
       const u = user(userId), b = book(bookId);
-      if (!u || u.role === 'librarian') return fail('Only students and faculty can reserve.');
+      if (!isMember(u)) return fail('Only students and faculty can reserve.');
       if (!b) return fail('Book not found.');
       if (db().reservations.some((r) => r.userId === u.id && r.bookId === b.id && (r.status === 'waiting' || r.status === 'ready'))) return fail('You have already reserved this book.');
       if (db().transactions.some((t) => t.userId === u.id && t.bookId === b.id && !t.returnDate)) return fail('You already have this book.');
@@ -375,7 +392,7 @@ window.OS = window.OS || {};
         onLoan: active.length,
         overdue: active.filter((x) => fineOf(x) > 0).map(enrichTx).sort((a, b) => b.fine - a.fine),
         finesThisMonth: d.transactions.filter((x) => x.returnDate && x.returnDate >= monthStart && x.finePaid).reduce((s, x) => s + x.fine, 0),
-        members: d.users.filter((u) => u.role !== 'librarian').length,
+        members: d.users.filter(isMember).length,
         waitingReservations: d.reservations.filter((r) => r.status === 'waiting').length,
         readyReservations: d.reservations.filter((r) => r.status === 'ready').map((r) => ({ ...r, book: book(r.bookId), user: publicUser(user(r.userId)) })),
         recent
@@ -385,8 +402,89 @@ window.OS = window.OS || {};
     // GET /api/members/:id/active-loans  (used on the Return screen)
     activeLoans(userId) {
       const u = user(userId);
-      if (!u || u.role === 'librarian') return fail('No student or faculty member with that ID.');
+      if (!isMember(u)) return fail('No student or faculty member with that ID.');
       return ok(db().transactions.filter((t) => t.userId === u.id && !t.returnDate).map(enrichTx));
+    },
+
+    // ================= Admin (user accounts) =================
+
+    // GET /api/admin/overview  (admin)
+    adminOverview() {
+      housekeeping();
+      const d = db();
+      const count = (r) => d.users.filter((u) => u.role === r).length;
+      const active = d.transactions.filter((t) => !t.returnDate);
+      return ok({
+        users: d.users.length,
+        admins: count('admin'), librarians: count('librarian'), students: count('student'), faculty: count('faculty'),
+        titles: d.books.length,
+        copies: d.books.reduce((s, b) => s + b.total, 0),
+        onLoan: active.length,
+        overdue: active.filter((t) => fineOf(t) > 0).length,
+        finesPending: d.users.filter(isMember).reduce((s, u) => s + memberStats(u).totalDue, 0),
+        rules: R,
+        latestUsers: d.users.slice(-5).reverse().map(publicUser)
+      });
+    },
+
+    // GET /api/admin/users?q=&role=  (admin)
+    listUsers({ q = '', role = 'All' } = {}) {
+      const s = q.trim().toLowerCase();
+      return ok(db().users
+        .filter((u) => role === 'All' || u.role === role)
+        .filter((u) => !s || u.name.toLowerCase().includes(s) || u.id.toLowerCase().includes(s) || u.dept.toLowerCase().includes(s) || u.email.toLowerCase().includes(s))
+        .map((u) => ({ ...publicUser(u), activeLoans: db().transactions.filter((t) => t.userId === u.id && !t.returnDate).length })));
+    },
+
+    // POST /api/admin/users  { id, name, role, dept, email, password }  (admin)
+    addUser(data) {
+      const v = checkUser(data, true);
+      if (v) return fail(v);
+      if (user(data.id)) return fail('A user with this ID already exists.');
+      const u = { id: data.id.trim().toUpperCase(), password: data.password, role: data.role, name: data.name.trim(), dept: data.dept.trim(), email: data.email.trim().toLowerCase() };
+      db().users.push(u);
+      save();
+      return ok(publicUser(u));
+    },
+
+    // PUT /api/admin/users/:id  { name, role, dept, email }  (admin)
+    updateUser(id, data) {
+      const u = user(id);
+      if (!u) return fail('User not found.');
+      const v = checkUser({ ...data, id: u.id }, false);
+      if (v) return fail(v);
+      if (data.role !== u.role) {
+        const loans = db().transactions.some((t) => t.userId === u.id && !t.returnDate);
+        if (loans && !OS.isMember({ role: data.role })) return fail('This user still has books issued. They must be returned before changing the role.');
+        if (u.role === 'admin' && db().users.filter((x) => x.role === 'admin').length === 1) return fail('There must be at least one administrator.');
+      }
+      Object.assign(u, { name: data.name.trim(), role: data.role, dept: data.dept.trim(), email: data.email.trim().toLowerCase() });
+      save();
+      return ok(publicUser(u));
+    },
+
+    // POST /api/admin/users/:id/reset-password  { password }  (admin)
+    resetPassword(id, password) {
+      const u = user(id);
+      if (!u) return fail('User not found.');
+      if (!password || password.length < 6) return fail('Password must be at least 6 characters.');
+      u.password = password;
+      save();
+      return ok(true);
+    },
+
+    // DELETE /api/admin/users/:id  (admin)
+    deleteUser(id, byAdminId) {
+      const u = user(id);
+      if (!u) return fail('User not found.');
+      if (u.id === byAdminId) return fail('You can\'t delete your own account.');
+      if (u.role === 'admin' && db().users.filter((x) => x.role === 'admin').length === 1) return fail('There must be at least one administrator.');
+      if (db().transactions.some((t) => t.userId === u.id && !t.returnDate)) return fail('This user still has books issued. They must be returned first.');
+      if (isMember(u) && memberStats(u).totalDue > 0) return fail('This user has unpaid fines. Collect them first.');
+      db().users = db().users.filter((x) => x.id !== u.id);
+      db().reservations.forEach((r) => { if (r.userId === u.id && (r.status === 'waiting' || r.status === 'ready')) r.status = 'cancelled'; });
+      save();
+      return ok({ deleted: u.id });
     },
 
     // GET /api/reports?period=week|month|semester
@@ -421,7 +519,7 @@ window.OS = window.OS || {};
       const top = Object.entries(bookCount).sort((a, b) => b[1] - a[1]).slice(0, 5)
         .map(([id, count], i) => { const b = book(id) || { title: id, category: '—' }; return { rank: i + 1, id, title: b.title, category: b.category, count }; });
 
-      const members = d.users.filter((u) => u.role !== 'librarian').map((u) => ({ ...publicUser(u), ...memberStats(u) }));
+      const members = d.users.filter(isMember).map((u) => ({ ...publicUser(u), ...memberStats(u) }));
       return ok({
         period, from: f,
         issued: issued.length,

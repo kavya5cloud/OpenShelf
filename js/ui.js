@@ -13,7 +13,7 @@ window.OS = window.OS || {};
   // Call at the top of every protected page. Redirects to login if needed.
   OS.requireAuth = function (roles) {
     const u = OS.session.get();
-    if (!u) { location.replace('login.html'); return null; }
+    if (!u) { location.replace(roles && roles.length === 1 && roles[0] === 'admin' ? 'admin-login.html' : 'login.html'); return null; }
     if (roles && !roles.includes(u.role)) { location.replace('dashboard.html'); return null; }
     return u;
   };
@@ -23,7 +23,8 @@ window.OS = window.OS || {};
   OS.esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   OS.money = (n) => '₹' + Number(n || 0).toLocaleString('en-IN');
   OS.initials = (name) => String(name || '?').replace(/^(Dr\.|Prof\.)\s*/, '').split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  OS.roleLabel = (r) => ({ librarian: 'Librarian', student: 'Student', faculty: 'Faculty' }[r] || r);
+  OS.roleBadge = (r) => ({ admin: 'red', librarian: 'green', student: 'blue', faculty: 'amber' }[r] || 'gray');
+  OS.roleLabel = (r) => ({ admin: 'Administrator', librarian: 'Librarian', student: 'Student', faculty: 'Faculty' }[r] || r);
   // Book cover: a designed cover from the book's color + title, with the real
   // cover (Open Library, by ISBN) layered on top when the network allows it.
   OS.coversOnline = true; // set false to always use designed covers
@@ -32,7 +33,7 @@ window.OS = window.OS || {};
     const img = OS.coversOnline && b.isbn
       ? `<img class="cover-img" src="https://covers.openlibrary.org/b/isbn/${encodeURIComponent(b.isbn)}-${big ? 'L' : 'M'}.jpg?default=false" alt="" loading="lazy">`
       : '';
-    return `<div class="cover ${size}" style="--c:${OS.esc(b.color || '#5F5BC4')}" aria-hidden="true"><span class="ct">${OS.esc(b.title)}</span><span class="ca">${OS.esc(String(b.author || '').split(',')[0])}</span>${img}</div>`;
+    return `<div class="cover ${size}" style="--c:${OS.esc(b.color || '#6B4226')}" aria-hidden="true"><span class="ct">${OS.esc(b.title)}</span><span class="ca">${OS.esc(String(b.author || '').split(',')[0])}</span>${img}</div>`;
   };
   // If a real cover can't load (offline, blocked, missing), quietly fall back.
   document.addEventListener('error', (e) => {
@@ -85,13 +86,21 @@ window.OS = window.OS || {};
     back: '<path d="M11 18l-6-6 6-6M19 18l-6-6 6-6"/>',
     fwd: '<path d="M13 6l6 6-6 6M5 6l6 6-6 6"/>',
     arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-    chevron: '<path d="M9 6l6 6-6 6"/>'
+    chevron: '<path d="M9 6l6 6-6 6"/>',
+    shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/>'
   };
   OS.icon = (name, size = 20) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ''}</svg>`;
-  OS.logo = (size = 36) => `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0E0D14"/><path d="M11 13v14M16 11v16M21 13v14" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M25 12.5l5 13.5" stroke="#A9A5F7" stroke-width="3" stroke-linecap="round"/><path d="M9 29h22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+  OS.logo = (size = 36) => `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#6B4226"/><path d="M11 13v14M16 11v16M21 13v14" stroke="#F7EBD3" stroke-width="3" stroke-linecap="round"/><path d="M25 12.5l5 13.5" stroke="#D9A441" stroke-width="3" stroke-linecap="round"/><path d="M9 29h22" stroke="#F7EBD3" stroke-width="2.5" stroke-linecap="round"/></svg>`;
 
   // ---------- app shell (sidebar + mobile top bar) ----------
   const NAV = {
+    admin: [
+      ['dashboard', 'dashboard.html', 'Admin Dashboard', 'grid'],
+      ['users', 'users.html', 'Users', 'users'],
+      ['catalog', 'catalog.html', 'Books', 'book'],
+      ['reports', 'reports.html', 'Reports', 'chart']
+    ],
     librarian: [
       ['dashboard', 'dashboard.html', 'Dashboard', 'grid'],
       ['catalog', 'catalog.html', 'Books', 'book'],
@@ -127,10 +136,10 @@ window.OS = window.OS || {};
 
   OS.shell = function (active) {
     const u = OS.session.get();
-    const items = NAV[u.role === 'librarian' ? 'librarian' : 'member'];
+    const items = NAV[OS.isMember(u) ? 'member' : u.role] || NAV.member;
     const content = OS.$('#content');
     let badge = {};
-    if (u.role !== 'librarian') {
+    if (OS.isMember(u)) {
       const db = OS.db();
       const ready = db.reservations.filter((r) => r.userId === u.id && r.status === 'ready').length;
       if (ready) badge.reservations = ready;

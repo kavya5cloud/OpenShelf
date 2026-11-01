@@ -22,6 +22,10 @@ window.OS = window.OS || {};
     maxRenewals: 1
   };
 
+  // Roles: admin (manages accounts), librarian (runs the desk), student & faculty (borrow books)
+  OS.isMember = (u) => !!u && (u.role === 'student' || u.role === 'faculty');
+  OS.isStaff = (u) => !!u && (u.role === 'librarian' || u.role === 'admin');
+
   // ---------- date helpers ----------
   const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
   OS.today = () => startOfDay(new Date());
@@ -39,6 +43,7 @@ window.OS = window.OS || {};
     const iso = (n) => OS.toISO(OS.addDays(t, n));
 
     const users = [
+      { id: 'ADM-001', password: 'superadmin123', role: 'admin', name: 'System Administrator', dept: 'IT Administration', email: 'admin@college.edu' },
       { id: 'LIB-001', password: 'admin123', role: 'librarian', name: 'Library Admin', dept: 'Central Library', email: 'library@college.edu' },
       { id: '24BCS001', password: 'student123', role: 'student', name: 'Riya Shah', dept: 'CSBS', email: 'riya.s@college.edu' },
       { id: '24BCS014', password: 'student123', role: 'student', name: 'Karan Patel', dept: 'CSBS', email: 'karan.p@college.edu' },
@@ -76,7 +81,7 @@ window.OS = window.OS || {};
     // Small deterministic random so the demo history is the same every reset.
     let s = 42;
     const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-    const members = users.filter((u) => u.role !== 'librarian');
+    const members = users.filter(OS.isMember);
 
     const transactions = [];
     let tid = 1;
@@ -153,11 +158,20 @@ window.OS = window.OS || {};
   // ---------- persistence ----------
   let memory = null; // fallback if localStorage is blocked
 
+  // Browsers that saved data before the admin role existed get the admin account added.
+  function migrate(data) {
+    if (data && Array.isArray(data.users) && !data.users.some((u) => u.role === 'admin')) {
+      data.users.unshift({ id: 'ADM-001', password: 'superadmin123', role: 'admin', name: 'System Administrator', dept: 'IT Administration', email: 'admin@college.edu' });
+      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* ignore */ }
+    }
+    return data;
+  }
+
   OS.db = function () {
     if (memory) return memory;
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) { memory = JSON.parse(raw); return memory; }
+      if (raw) { memory = migrate(JSON.parse(raw)); return memory; }
     } catch (e) { /* ignore */ }
     memory = seed();
     OS.saveDB();
