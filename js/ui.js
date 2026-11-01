@@ -32,7 +32,7 @@ window.OS = window.OS || {};
     const img = OS.coversOnline && b.isbn
       ? `<img class="cover-img" src="https://covers.openlibrary.org/b/isbn/${encodeURIComponent(b.isbn)}-${big ? 'L' : 'M'}.jpg?default=false" alt="" loading="lazy">`
       : '';
-    return `<div class="cover ${size}" style="--c:${OS.esc(b.color || '#6B4226')}" aria-hidden="true"><span class="ct">${OS.esc(b.title)}</span><span class="ca">${OS.esc(String(b.author || '').split(',')[0])}</span>${img}</div>`;
+    return `<div class="cover ${size}" style="--c:${OS.esc(b.color || '#5F5BC4')}" aria-hidden="true"><span class="ct">${OS.esc(b.title)}</span><span class="ca">${OS.esc(String(b.author || '').split(',')[0])}</span>${img}</div>`;
   };
   // If a real cover can't load (offline, blocked, missing), quietly fall back.
   document.addEventListener('error', (e) => {
@@ -88,7 +88,7 @@ window.OS = window.OS || {};
     chevron: '<path d="M9 6l6 6-6 6"/>'
   };
   OS.icon = (name, size = 20) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ''}</svg>`;
-  OS.logo = (size = 36) => `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#6B4226"/><path d="M11 13v14M16 11v16M21 13v14" stroke="#F7EBD3" stroke-width="3" stroke-linecap="round"/><path d="M25 12.5l5 13.5" stroke="#D9A441" stroke-width="3" stroke-linecap="round"/><path d="M9 29h22" stroke="#F7EBD3" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+  OS.logo = (size = 36) => `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0E0D14"/><path d="M11 13v14M16 11v16M21 13v14" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M25 12.5l5 13.5" stroke="#A9A5F7" stroke-width="3" stroke-linecap="round"/><path d="M9 29h22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>`;
 
   // ---------- app shell (sidebar + mobile top bar) ----------
   const NAV = {
