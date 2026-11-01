@@ -13,7 +13,7 @@ window.OS = window.OS || {};
   // Call at the top of every protected page. Redirects to login if needed.
   OS.requireAuth = function (roles) {
     const u = OS.session.get();
-    if (!u) { location.replace('index.html#login'); return null; }
+    if (!u) { location.replace('login.html'); return null; }
     if (roles && !roles.includes(u.role)) { location.replace('dashboard.html'); return null; }
     return u;
   };

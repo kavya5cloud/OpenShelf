@@ -19,7 +19,7 @@
           <svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0E0D14"/><path d="M11 13v14M16 11v16M21 13v14" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M25 12.5l5 13.5" stroke="#A9A5F7" stroke-width="3" stroke-linecap="round"/><path d="M9 29h22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
           OpenShelf
         </a>
-        <button class="pill" type="button" data-login>Log in <span class="arr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+        <a class="pill" href="login.html" data-login>Log in <span class="arr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
       </nav>
 
       <div class="notice" aria-live="polite">
@@ -59,59 +59,27 @@
         <ul class="grid4" id="topBooks" aria-label="Most borrowed books"></ul>
       </div>
       <div class="cta">
-        <button class="pill lg" type="button" data-login id="ctaBtn">Log in to borrow <span class="arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+        <a class="pill lg" href="login.html" data-login id="ctaBtn">Log in to borrow <span class="arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
         <p>For students, faculty and librarians — sign in with your college ID.</p>
       </div>
     </section>
   </main>
-
-  <dialog class="login" id="login" aria-labelledby="loginTitle">
-    <form id="loginForm" novalidate>
-      <div class="grab" aria-hidden="true"></div>
-      <div class="login-top">
-        <div>
-          <h2 id="loginTitle">Welcome back</h2>
-          <p class="lead">Choose your role and log in with your college ID.</p>
-        </div>
-        <button class="x" type="button" id="closeLogin" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      </div>
-
-      <div class="seg" id="rolePick" role="group" aria-label="I am a">
-        <button type="button" data-role="librarian" aria-pressed="false">Librarian</button>
-        <button type="button" data-role="student" aria-pressed="true">Student</button>
-        <button type="button" data-role="faculty" aria-pressed="false">Faculty</button>
-      </div>
-
-      <div class="field">
-        <label for="uid" id="uidLabel">Enrollment number</label>
-        <input id="uid" name="uid" autocomplete="username" placeholder="e.g. 24BCS001" required>
-      </div>
-      <div class="field">
-        <label for="pwd">Password</label>
-        <input id="pwd" name="pwd" type="password" autocomplete="current-password" placeholder="••••••••" required>
-      </div>
-      <p class="err" id="loginError" role="alert" hidden></p>
-      <button class="pill lg" type="submit" id="loginBtn"><span id="loginBtnText">Log in as Student</span> <span class="arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
-
-      <div class="demo" id="demoBox"></div>
-    </form>
-  </dialog>
 
   <script src="js/store.js"></script>
   <script src="js/audiobooks.js"></script>
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
   <script>
-  (function () {
+  (async function () {
     const $ = OS.$, esc = OS.esc;
     const me = OS.session.get();
-    const db = OS.db();
-    const books = db.books;
+    let books = [];
+    try { books = (await OS.api.listBooks()).sort((a, b) => a.id.localeCompare(b.id)); } catch (e) { /* show the page without books */ }
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // ---------- data for the page ----------
     const loans = {};
-    db.transactions.forEach((t) => { loans[t.bookId] = (loans[t.bookId] || 0) + 1; });
+    books.forEach((b) => { loans[b.id] = b.timesIssued; });
     const popular = books.slice().sort((a, b) => (loans[b.id] || 0) - (loans[a.id] || 0));
     const cats = ['All', ...new Set(books.map((b) => b.category))];
     const inCat = (c) => (c === 'All' ? popular : popular.filter((b) => b.category === c));
@@ -152,7 +120,7 @@
     // ---------- featured sheet ----------
     $('#featTitle').textContent = season + ' Reads';
     $('#topBooks').innerHTML = popular.slice(0, 4).map((b) => `<li>${cover(b, books.indexOf(b))}</li>`).join('');
-    const total = db.transactions.length;
+    const total = books.reduce((s, b) => s + b.timesIssued, 0);
     if (still) $('#loanCount').textContent = total;
     else {
       const t0 = performance.now();
@@ -178,67 +146,13 @@
       OS.$$('#notice .notice-item').forEach((el, i) => el.setAttribute('aria-hidden', String(i !== ni)));
     }, 4500);
 
-    // ---------- signed in already: send them to the app ----------
+    // ---------- signed in already: point the buttons at the app ----------
     if (me) {
-      if (location.hash === '#login') { location.replace('dashboard.html'); return; }
       OS.$$('[data-login]').forEach((b) => {
         b.firstChild.textContent = b.id === 'ctaBtn' ? 'Open your dashboard ' : 'Dashboard ';
-        b.addEventListener('click', () => { location.href = 'dashboard.html'; });
+        b.href = 'dashboard.html';
       });
-      return;
     }
-
-    // ---------- login sheet ----------
-    const dlg = $('#login');
-    function openLogin() {
-      if (dlg.open) return;
-      dlg.showModal();
-      if (location.hash !== '#login') history.replaceState(null, '', '#login');
-      setTimeout(() => $('#uid').focus(), 60);
-    }
-    function closeLogin() { dlg.close(); }
-    dlg.addEventListener('close', () => { if (location.hash === '#login') history.replaceState(null, '', location.pathname); });
-    dlg.addEventListener('click', (e) => { if (e.target === dlg) closeLogin(); }); // tap on the backdrop
-    $('#closeLogin').addEventListener('click', closeLogin);
-    OS.$$('[data-login]').forEach((b) => b.addEventListener('click', openLogin));
-    window.addEventListener('hashchange', () => { if (location.hash === '#login') openLogin(); });
-
-    const CFG = {
-      librarian: { label: 'Staff ID', ph: 'e.g. LIB-001', demo: ['LIB-001', 'admin123'] },
-      student: { label: 'Enrollment number', ph: 'e.g. 24BCS001', demo: ['24BCS001', 'student123'] },
-      faculty: { label: 'Faculty ID', ph: 'e.g. FAC-1024', demo: ['FAC-1024', 'faculty123'] }
-    };
-    let role = 'student';
-
-    function setRole(r) {
-      role = r;
-      OS.$$('#rolePick button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.role === r)));
-      $('#uidLabel').textContent = CFG[r].label;
-      $('#uid').placeholder = CFG[r].ph;
-      $('#loginBtnText').textContent = 'Log in as ' + OS.roleLabel(r);
-      $('#demoBox').innerHTML = `<span>Demo: <code>${CFG[r].demo[0]}</code> / <code>${CFG[r].demo[1]}</code></span><button type="button" id="fillDemo">Fill it</button>`;
-      $('#fillDemo').addEventListener('click', () => { $('#uid').value = CFG[r].demo[0]; $('#pwd').value = CFG[r].demo[1]; $('#pwd').focus(); });
-      $('#loginError').hidden = true;
-    }
-    OS.$$('#rolePick button').forEach((b) => b.addEventListener('click', () => setRole(b.dataset.role)));
-    setRole('student');
-
-    $('#loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const err = $('#loginError');
-      err.hidden = true;
-      const id = $('#uid').value.trim(), pwd = $('#pwd').value;
-      if (!id || !pwd) { err.textContent = 'Please enter your ID and password.'; err.hidden = false; return; }
-      try {
-        const user = await OS.api.login(id, pwd, role);
-        OS.session.set(user);
-        location.href = 'dashboard.html';
-      } catch (ex) {
-        err.textContent = ex.message; err.hidden = false;
-      }
-    });
-
-    if (location.hash === '#login') openLogin();
   })();
   </script>
 </body>

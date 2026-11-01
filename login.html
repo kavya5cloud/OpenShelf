@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenShelf — Sign in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth">
+    <section class="auth-side">
+      <a class="brand" href="index.html">
+        <span id="logoSlot"></span><span style="font-size:24px">OpenShelf</span>
+      </a>
+      <div style="display:flex;flex-direction:column;gap:20px;position:relative;z-index:1">
+        <h1>Your campus library, one click away.</h1>
+        <p>Search the catalog, reserve books, listen to audiobook summaries, and keep track of due dates and fines — for librarians, students and faculty.</p>
+      </div>
+      <div class="shelf" aria-hidden="true"><div class="shelf-books" id="loginShelf" style="min-height:170px;overflow:hidden"></div></div>
+      <ul class="auth-points">
+        <li><span id="i1"></span>Search and reserve books anytime</li>
+        <li><span id="i2"></span>Listen to audiobook summaries on the go</li>
+        <li><span id="i3"></span>Get reminders before your due date</li>
+      </ul>
+    </section>
+
+    <div class="auth-form-wrap">
+      <form class="auth-form" id="loginForm" novalidate>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <h2 style="font-size:28px;font-weight:800">Sign in</h2>
+          <p class="muted">Choose your role and log in with your college ID.</p>
+        </div>
+
+        <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
+          <legend class="label" style="padding:0;margin-bottom:10px">I am a</legend>
+          <div class="role-pick" id="rolePick">
+            <button type="button" data-role="librarian" aria-pressed="false">Librarian</button>
+            <button type="button" data-role="student" aria-pressed="true">Student</button>
+            <button type="button" data-role="faculty" aria-pressed="false">Faculty</button>
+          </div>
+        </fieldset>
+
+        <div class="field">
+          <label for="uid" id="uidLabel">Enrollment number</label>
+          <input class="input" id="uid" name="uid" autocomplete="username" placeholder="e.g. 24BCS001" required>
+        </div>
+        <div class="field">
+          <label for="pwd">Password</label>
+          <input class="input" id="pwd" name="pwd" type="password" autocomplete="current-password" placeholder="••••••••" required>
+        </div>
+        <p class="error-text" id="loginError" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" type="submit" id="loginBtn">Log in as Student</button>
+
+        <div class="demo-box" id="demoBox"></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/audiobooks.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+  (function () {
+    const $ = OS.$;
+    if (OS.session.get()) { location.replace('dashboard.html'); return; }
+
+    $('#logoSlot').outerHTML = OS.logo(40);
+    $('#i1').outerHTML = '<span style="color:var(--primary)">' + OS.icon('search', 22) + '</span>';
+    $('#i2').outerHTML = '<span style="color:var(--primary)">' + OS.icon('headphones', 22) + '</span>';
+    $('#i3').outerHTML = '<span style="color:var(--primary)">' + OS.icon('calendar', 22) + '</span>';
+    OS.api.listBooks().then((all) => {
+      $('#loginShelf').innerHTML = ['BK-016', 'BK-001', 'BK-017', 'BK-009', 'BK-018', 'BK-013']
+        .map((id) => all.find((b) => b.id === id)).filter(Boolean)
+        .map((b) => `<div class="shelf-book">${OS.cover(b, 'md')}</div>`).join('');
+    }).catch(() => { /* the shelf is decoration; the form still works */ });
+
+    const CFG = {
+      librarian: { label: 'Staff ID', ph: 'e.g. LIB-001', demo: ['LIB-001', 'admin123'] },
+      student: { label: 'Enrollment number', ph: 'e.g. 24BCS001', demo: ['24BCS001', 'student123'] },
+      faculty: { label: 'Faculty ID', ph: 'e.g. FAC-1024', demo: ['FAC-1024', 'faculty123'] }
+    };
+    let role = 'student';
+
+    function setRole(r) {
+      role = r;
+      OS.$$('#rolePick button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.role === r)));
+      $('#uidLabel').textContent = CFG[r].label;
+      $('#uid').placeholder = CFG[r].ph;
+      $('#loginBtn').textContent = 'Log in as ' + OS.roleLabel(r);
+      $('#demoBox').innerHTML = `Demo login: <code>${CFG[r].demo[0]}</code> / <code>${CFG[r].demo[1]}</code> <a href="#" id="fillDemo" style="font-weight:600;margin-left:4px">Fill it</a>`;
+      $('#fillDemo').addEventListener('click', (e) => { e.preventDefault(); $('#uid').value = CFG[r].demo[0]; $('#pwd').value = CFG[r].demo[1]; });
+      $('#loginError').hidden = true;
+    }
+    OS.$$('#rolePick button').forEach((b) => b.addEventListener('click', () => setRole(b.dataset.role)));
+    setRole('student');
+
+    $('#loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = $('#loginError');
+      err.hidden = true;
+      const id = $('#uid').value.trim(), pwd = $('#pwd').value;
+      if (!id || !pwd) { err.textContent = 'Please enter your ID and password.'; err.hidden = false; return; }
+      try {
+        const user = await OS.api.login(id, pwd, role);
+        OS.session.set(user);
+        location.href = 'dashboard.html';
+      } catch (ex) {
+        err.textContent = ex.message; err.hidden = false;
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
