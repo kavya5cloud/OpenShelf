@@ -64,12 +64,15 @@
         </div>
       </div>`;
     const rb = $('#remindBtn');
-    if (rb) rb.addEventListener('click', () => {
-      const db = OS.db();
-      d.overdue.forEach((t) => db.notifications.unshift({ id: OS.nextId('NT-', 'nt', 3), userId: t.user.id, date: OS.toISO(OS.today()), type: 'warn', text: `Reminder: "${t.book.title}" is ${OS.dueText(t).toLowerCase()}. Fine so far: ${OS.money(t.fine)}.`, read: false }));
-      OS.saveDB();
-      OS.toast(`Reminder sent to ${d.overdue.length} member(s).`, 'success');
+    if (rb) rb.addEventListener('click', async () => {
       rb.disabled = true;
+      try {
+        const r = await OS.api.sendReminders();
+        OS.toast(`Reminder sent to ${r.sent} member(s).`, 'success');
+      } catch (e) {
+        OS.toast(e.message, 'error');
+        rb.disabled = false;
+      }
     });
   }
 

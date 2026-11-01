@@ -1,14 +1,15 @@
 /* Audiobooks — read-along player built on the browser's Web Speech API.
    Text is spoken one sentence at a time, which lets us highlight the current
    sentence, pause/resume reliably, change speed, and remember the position. */
-(function () {
+(async function () {
   const me = OS.requireAuth();
   if (!me) return;
   OS.shell('audio');
+  const all = await OS.api.listBooks();
   const $ = OS.$, esc = OS.esc;
   const synth = window.speechSynthesis;
   const canSpeak = !!(synth && window.SpeechSynthesisUtterance);
-  const books = () => OS.db().books;
+  const books = () => all;
   const ids = Object.keys(OS.AUDIOBOOKS).filter((id) => books().some((b) => b.id === id));
   const split = (text) => text.match(/[^.!?]+[.!?]+/g).map((s) => s.trim());
 

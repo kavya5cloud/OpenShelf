@@ -1,0 +1,17 @@
+{
+  "name": "openshelf",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env scripts/dev.mjs",
+    "db:setup": "node --env-file-if-exists=.env scripts/db.mjs setup",
+    "db:reset": "node --env-file-if-exists=.env scripts/db.mjs reset"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "pg": "^8.23.1"
+  }
+}

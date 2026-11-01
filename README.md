@@ -1,8 +1,8 @@
-# OpenShelf — Library Management System (Frontend)
+# OpenShelf — Library Management System
 
 A role-based library management system for colleges. The **administrator**, **librarian**, **students** and **faculty** each get their own dashboard.
 
-Built with plain **HTML, CSS and JavaScript** in a warm "reading room" design,: no framework and no build step. It works fully right now using a **dummy database** that is saved in the browser (localStorage). When the backend is ready, only `js/api.js` needs to change.
+Built with plain **HTML, CSS and JavaScript** in a warm "reading room" design: no framework and no build step. The backend is a single **Vercel Function** (Node.js) with a **Postgres** database. It creates its own tables and demo data the first time it runs.
 
 ## Demo logins
 
@@ -15,7 +15,7 @@ Built with plain **HTML, CSS and JavaScript** in a warm "reading room" design,: 
 
 More students: `24BCS014`, `24BCE027`, `23BME009`, `24BIT033`, `25BCS041` (all `student123`). Faculty: `FAC-2051` (`faculty123`).
 
-**Reset demo data** in the sidebar puts everything back to the starting sample data.
+**Reset demo data** in the librarian's or admin's sidebar puts everything back to the starting sample data, for everyone.
 
 ## Features
 
@@ -54,7 +54,8 @@ More students: `24BCS014`, `24BCE027`, `23BME009`, `24BIT033`, `25BCS041` (all `
 ## Folder structure
 
 ```
-index.html            Login
+index.html            Home page (hero) with "Log in"
+login.html            Sign in
 dashboard.html        Dashboard (different for librarian vs student/faculty)
 catalog.html          Catalog / Manage books
 issue-return.html     Issue & return (librarian)
@@ -63,43 +64,52 @@ reports.html          Reports (librarian)
 my-books.html         My books, history, fines (student/faculty)
 reservations.html     Reservations (student/faculty)
 library.html          My Shelf: bookshelf view (student/faculty)
+admin-login.html      Admin sign in
+users.html            User accounts (admin)
 audiobooks.html       Audiobook player with read-along (everyone)
-css/style.css         All styles (colors at the top in :root)
-js/store.js           Dummy database + library rules
+css/style.css         App styles (colors at the top in :root)
+css/home.css          Home page styles
+js/api.js             Calls the backend. Pages only get data through this file.
+js/store.js           Library rules + date helpers
 js/audiobooks.js      Audiobook summaries (chapters) + listening progress
-js/api.js             API layer: the ONLY file to change when the backend is ready
 js/ui.js              Sidebar, login session, toasts, dialogs, icons
 js/pages/*.js         One script per page
-API.md                Endpoint list for the backend team
+
+api/index.js          The backend: every /api/* route, and who may call it
+api/_lib/service.js   Library logic (issue, return, fines, reservation queue…)
+api/_lib/schema.js    Database tables
+api/_lib/seed.js      Demo data
+api/_lib/rules.js     Library rules the server enforces
+API.md                Endpoint list
 ```
+
+## Deploy on Vercel (about 5 minutes, no commands)
+
+1. **Import the repo.** On https://vercel.com/new, import this GitHub repo. Leave every setting as it is and click **Deploy**. (The site loads, but books won't show yet, because there's no database.)
+2. **Add a database.** In the project, open the **Storage** tab → **Create Database** → **Neon** (Serverless Postgres) → pick the free plan → **Connect** it to the project. This sets `DATABASE_URL` for you.
+3. **Redeploy.** Go to **Deployments**, open the menu (⋯) on the latest one, and click **Redeploy**.
+
+That's it. On the first visit, the backend creates its tables and loads the demo data. Log in with the demo accounts above.
+
+*Optional:* add an environment variable `AUTH_SECRET` (any long random string) under **Settings → Environment Variables**. Without it, login tokens are signed with a secret derived from the database URL, which is also fine.
 
 ## Run it locally
 
-Option 1: just double-click `index.html`.
+You need **Node.js 20+** and a Postgres database. The easiest is a free Neon database (https://neon.tech): copy its connection string.
 
-Option 2 (recommended, behaves like a real server):
 ```
-cd openshelf
-python -m http.server 8000
+npm install
+cp .env.example .env        # then paste your connection string into DATABASE_URL
+npm run dev
 ```
-Then open http://localhost:8000. In VS Code, the **Live Server** extension also works.
 
-## Deploy (free)
+Open http://localhost:3000. Tables and demo data are created on the first request.
 
-**Netlify (easiest):** go to https://app.netlify.com/drop and drag the whole `openshelf` folder in. You'll get a live link right away.
+To wipe the database and start again from the demo data: `npm run db:reset` (or use **Reset demo data** in the librarian's or admin's sidebar).
 
-**GitHub Pages:**
-1. Create a repo and push these files (with `index.html` at the root).
-2. Go to Settings → Pages → Source: *Deploy from a branch* → `main` / root → Save.
-3. Your site will be at `https://<username>.github.io/<repo>/`.
+## Changing a library rule
 
-**Vercel:** import the GitHub repo and choose the "Other" framework preset. No build command is needed.
-
-## Connecting the real backend
-
-1. Your backend teammate builds the endpoints listed in `API.md`.
-2. In `js/api.js`, set `OS.CONFIG.BASE_URL` (for example `http://localhost:5000`).
-3. Replace the body of each function with the `http()` call for its endpoint. The endpoint is written in a comment above every function. Pages don't change, because every function already returns a Promise.
+Change it in **both** `api/_lib/rules.js` (the server enforces it) and `OS.RULES` in `js/store.js` (the pages display it).
 
 ## Notes
 

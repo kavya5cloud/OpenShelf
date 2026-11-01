@@ -1,11 +1,32 @@
-# OpenShelf — API contract (for the backend team)
+# OpenShelf — API
 
-The frontend calls these endpoints through `js/api.js`. All requests and responses are JSON.
-Errors should return a 4xx status with `{ "message": "Human readable reason" }`. The frontend shows that message to the user.
+The backend lives in `api/` (one Vercel Function) and the frontend calls it through `js/api.js`. All requests and responses are JSON.
+Errors return a 4xx status with `{ "message": "Human readable reason" }`. The frontend shows that message to the user.
+
+## Logging in
+
+`POST /api/auth/login` returns the user plus a `token`. Send it on every other request:
+
+```
+Authorization: Bearer <token>
+```
+
+Tokens last 7 days. A missing, expired or tampered token gets **401** (the frontend then sends the user back to the login page). A valid token for the wrong role gets **403**.
+
+**Who can call what** (the Access column below):
+
+| Access | Meaning |
+|---|---|
+| public | anyone, no token needed |
+| librarian | librarians only |
+| staff | librarians and admins |
+| admin | admins only |
+| self | the member in the URL, or a librarian |
+| member | a signed-in student or faculty member, acting as themselves (the server uses the token, not the body) |
 
 ## Database tables
 
-**users**: `id` (PK, e.g. 24BCS001 / FAC-1024 / LIB-001), `password` (hashed!), `role` (admin | librarian | student | faculty), `name`, `dept`, `email`
+**users**: `id` (PK, e.g. 24BCS001 / FAC-1024 / LIB-001 / ADM-001), `password_hash` (bcrypt), `role` (admin | librarian | student | faculty), `name`, `dept`, `email`
 
 **books**: `id` (PK, BK-001), `isbn`, `title`, `author`, `category`, `total`, `available`, `shelf`, `year`, `color`, `addedOn`
 
@@ -17,7 +38,7 @@ Errors should return a 4xx status with `{ "message": "Human readable reason" }`.
 
 Dates are `YYYY-MM-DD` strings.
 
-## Business rules (must match `OS.RULES` in js/store.js)
+## Business rules (`api/_lib/rules.js`, shown in the UI from `OS.RULES` in js/store.js)
 
 | Rule | Value |
 |---|---|
@@ -32,36 +53,39 @@ Dates are `YYYY-MM-DD` strings.
 
 ## Endpoints
 
-| Method | Path | Body / query | Returns |
-|---|---|---|---|
-| POST | `/api/auth/login` | `{ id, password, role }` | user (no password) |
-| GET | `/api/books` | `?q=&category=&sort=title\|popular\|newest\|available&availableOnly=` | book[] (+ `timesIssued`, `queue`) |
-| GET | `/api/books/categories` | | string[] |
-| GET | `/api/books/:id` | (id or ISBN) | book |
-| POST | `/api/books` | `{ title, author, isbn, category, total, shelf, year }` | book |
-| PUT | `/api/books/:id` | same as POST | book |
-| DELETE | `/api/books/:id` | | `{ deleted }` (blocked if copies are out) |
-| GET | `/api/members` | `?q=&role=` | member[] with stats |
-| GET | `/api/members/:id` | | member + stats |
-| GET | `/api/members/:id/summary` | | `{ user, stats, issued[], history[], reservations[], notifications[] }` |
-| GET | `/api/members/:id/active-loans` | | transaction[] |
-| POST | `/api/members/:id/pay-fines` | | `{ amount }` |
-| PATCH | `/api/members/:id/notifications/read` | | `true` |
-| POST | `/api/transactions/issue` | `{ userId, bookId }` | transaction |
-| POST | `/api/transactions/:id/return` | `{ finePaid }` | transaction |
-| POST | `/api/transactions/:id/renew` | `{ userId }` | transaction |
-| POST | `/api/reservations` | `{ userId, bookId }` | reservation (+ `position`) |
-| DELETE | `/api/reservations/:id` | `{ userId }` | reservation |
-| GET | `/api/dashboard` | | librarian dashboard numbers |
-| GET | `/api/reports` | `?period=week\|month\|semester` | report |
-| GET | `/api/admin/overview` | | admin dashboard numbers |
-| GET | `/api/admin/users` | `?q=&role=` | user[] (+ `activeLoans`) |
-| POST | `/api/admin/users` | `{ id, name, role, dept, email, password }` | user |
-| PUT | `/api/admin/users/:id` | `{ name, role, dept, email }` | user |
-| POST | `/api/admin/users/:id/reset-password` | `{ password }` | `true` |
-| DELETE | `/api/admin/users/:id` | | `{ deleted }` (blocked if books issued or fines unpaid) |
+| Method | Path | Body / query | Returns | Access |
+|---|---|---|---|---|
+| POST | `/api/auth/login` | `{ id, password, role }` | user (no password) + `token` | public |
+| GET | `/api/books` | `?q=&category=&sort=title\|popular\|newest\|available&availableOnly=true` | book[] (+ `timesIssued`, `queue`) | public |
+| GET | `/api/books/categories` | | string[] | public |
+| GET | `/api/books/:id` | (id or ISBN) | book | public |
+| POST | `/api/books` | `{ title, author, isbn, category, total, shelf, year }` | book | staff |
+| PUT | `/api/books/:id` | same as POST | book | staff |
+| DELETE | `/api/books/:id` | | `{ deleted }` (blocked if copies are out) | staff |
+| GET | `/api/members` | `?q=&role=` | member[] with stats | librarian |
+| GET | `/api/members/:id` | | member + stats | librarian |
+| GET | `/api/members/:id/summary` | | `{ user, stats, issued[], history[], reservations[], notifications[] }` | self |
+| GET | `/api/members/:id/active-loans` | | transaction[] | librarian |
+| POST | `/api/members/:id/pay-fines` | | `{ amount }` | librarian |
+| PATCH | `/api/members/:id/notifications/read` | | `true` | self |
+| POST | `/api/transactions/issue` | `{ userId, bookId }` | transaction | librarian |
+| POST | `/api/transactions/:id/return` | `{ finePaid }` | transaction | librarian |
+| POST | `/api/transactions/:id/renew` | | transaction | member |
+| POST | `/api/reservations` | `{ bookId }` | reservation (+ `position`) | member |
+| DELETE | `/api/reservations/:id` | | reservation | member |
+| GET | `/api/dashboard` | | librarian dashboard numbers | librarian |
+| GET | `/api/reports` | `?period=week\|month\|semester` | report | staff |
+| POST | `/api/notifications/reminders` | | `{ sent }`: reminds everyone with an overdue book | librarian |
+| POST | `/api/admin/reset` | | `{ reset: true }`: puts the demo data back | staff |
+| GET | `/api/admin/overview` | | admin dashboard numbers | admin |
+| GET | `/api/admin/users` | `?q=&role=` | user[] (+ `activeLoans`) | admin |
+| POST | `/api/admin/users` | `{ id, name, role, dept, email, password }` | user | admin |
+| PUT | `/api/admin/users/:id` | `{ name, role, dept, email }` | user | admin |
+| POST | `/api/admin/users/:id/reset-password` | `{ password }` | `true` | admin |
+| DELETE | `/api/admin/users/:id` | | `{ deleted }` (blocked if books issued or fines unpaid) | admin |
 
-**Login rule:** `/api/auth/login` with `role: "admin"` only accepts admin accounts, and admin accounts can only sign in with `role: "admin"` (from `admin-login.html`). All `/api/admin/*` endpoints must check that the caller is an admin.
+**Login rule:** `/api/auth/login` with `role: "admin"` only accepts admin accounts, and admin accounts can only sign in with `role: "admin"` (from `admin-login.html`).
+
 
 **Member stats** fields: `issuedCount, overdueCount, unpaidFine, accruingFine, totalDue, limit, loanDays, totalBorrowed`.
 
@@ -83,3 +107,6 @@ OS.api.memberSummary('24BCS001').then(console.log)
 7. Renew an overdue book → blocked; renew twice → blocked
 8. Delete a book while a copy is issued → blocked
 9. Student opens `members.html` directly → redirected to the dashboard
+10. Call a librarian endpoint with no token → 401; with a student's token → 403
+11. Student asks for another member's `/summary` → 403
+12. Two librarians issue the last copy of a book at the same moment → exactly one succeeds

@@ -46,8 +46,8 @@
   }
 
   async function render() {
-    const books = await OS.api.listBooks(state);
-    const total = OS.db().books.length;
+    const [books, all] = await Promise.all([OS.api.listBooks(state), OS.api.listBooks()]);
+    const total = all.length;
     $('#countText').textContent = `Showing ${books.length} of ${total} titles`;
     $('#grid').innerHTML = books.length ? books.map((b) => `
       <article class="book-card">

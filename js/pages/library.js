@@ -32,7 +32,7 @@
 
   async function load() {
     data = await OS.api.memberSummary(me.id);
-    const books = OS.db().books;
+    const books = await OS.api.listBooks();
     const byId = (id) => books.find((b) => b.id === id);
 
     // Currently reading = issued books; progress = how far into the loan period
