@@ -15,7 +15,7 @@
     const list = await OS.api.listUsers(state);
     $('#countText').textContent = `${list.length} account${list.length === 1 ? '' : 's'} shown`;
     $('#table').innerHTML = list.length ? `
-      <table>
+      <table class="users-table">
         <thead><tr><th>User</th><th>Role</th><th>Department</th><th class="num">Books issued</th><th></th></tr></thead>
         <tbody>${list.map((u) => `
           <tr>
