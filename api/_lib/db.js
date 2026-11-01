@@ -11,7 +11,9 @@ export function getPool() {
     const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
     if (!connectionString) throw new ApiError(503, 'The database isn\'t connected yet. Add a Postgres database to the Vercel project (see README).');
     // Small pool: each serverless instance only needs a few connections.
-    pool = new pg.Pool({ connectionString, max: 5, idleTimeoutMillis: 5000 });
+    // sslmode=require already means a full certificate check in pg 8; say so
+    // explicitly so it stays that way in pg 9 (and pg stops warning about it).
+    pool = new pg.Pool({ connectionString: connectionString.replace(/sslmode=require\b/, 'sslmode=verify-full'), max: 5, idleTimeoutMillis: 5000 });
   }
   return pool;
 }
