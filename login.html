@@ -13,7 +13,7 @@
   <div class="auth">
     <section class="auth-side">
       <a class="brand" href="index.html">
-        <span id="logoSlot"></span><span style="font-size:24px">OpenShelf</span>
+        <img class="wordmark" src="img/logo.png" alt="OpenShelf" height="38">
       </a>
       <div style="display:flex;flex-direction:column;gap:20px;position:relative;z-index:1">
         <h1>Your campus library, one click away.</h1>
@@ -69,7 +69,6 @@
     const $ = OS.$;
     if (OS.session.get()) { location.replace('dashboard.html'); return; }
 
-    $('#logoSlot').outerHTML = OS.logo(40);
     $('#i1').outerHTML = '<span style="color:var(--primary)">' + OS.icon('search', 22) + '</span>';
     $('#i2').outerHTML = '<span style="color:var(--primary)">' + OS.icon('headphones', 22) + '</span>';
     $('#i3').outerHTML = '<span style="color:var(--primary)">' + OS.icon('calendar', 22) + '</span>';

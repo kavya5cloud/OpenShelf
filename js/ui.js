@@ -91,7 +91,8 @@ window.OS = window.OS || {};
     key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/>'
   };
   OS.icon = (name, size = 20) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ''}</svg>`;
-  OS.logo = (size = 36) => `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0E0D14"/><path d="M11 13v14M16 11v16M21 13v14" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M25 12.5l5 13.5" stroke="#A9A5F7" stroke-width="3" stroke-linecap="round"/><path d="M9 29h22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+  // The OpenShelf wordmark. light = white version, for dark backgrounds.
+  OS.wordmark = (height = 30, light = false) => `<img class="wordmark" src="img/logo${light ? '-light' : ''}.png" alt="OpenShelf" height="${height}">`;
 
   // ---------- app shell (sidebar + mobile top bar) ----------
   const NAV = {
@@ -114,7 +115,7 @@ window.OS = window.OS || {};
       ['catalog', 'catalog.html', 'Catalog', 'book'],
       ['audio', 'audiobooks.html', 'Audiobooks', 'headphones'],
       ['reservations', 'reservations.html', 'Reservations', 'bookmark'],
-      ['mybooks', 'my-books.html', 'Loans & Fines', 'library']
+      ['mybooks', 'my-books.html', 'Fines', 'library']
     ]
   };
   NAV.librarian.splice(2, 0, ['audio', 'audiobooks.html', 'Audiobooks', 'headphones']);
@@ -149,7 +150,7 @@ window.OS = window.OS || {};
     app.id = 'app';
     app.innerHTML = `
       <aside class="sidebar" id="sidebar">
-        <a class="brand" href="dashboard.html">${OS.logo(36)}<span>OpenShelf</span></a>
+        <a class="brand" href="dashboard.html">${OS.wordmark(30)}</a>
         <nav class="nav" aria-label="Main">
           ${items.map(([key, href, label, ic]) => `<a href="${href}" class="${key === active ? 'active' : ''}" ${key === active ? 'aria-current="page"' : ''}>${OS.icon(ic)}${label}</a>`).join('')}
         </nav>
@@ -165,7 +166,7 @@ window.OS = window.OS || {};
       </aside>
       <div class="main">
         <header class="topbar">
-          <a class="brand" href="dashboard.html">${OS.logo(30)}<span style="font-size:18px">OpenShelf</span></a>
+          <a class="brand" href="dashboard.html">${OS.wordmark(24)}</a>
           <button type="button" id="menuBtn" aria-label="Open menu" aria-expanded="false">${OS.icon('menu')}</button>
         </header>
       </div>`;

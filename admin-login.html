@@ -13,7 +13,7 @@
   <div class="auth">
     <section class="auth-side admin-side">
       <a class="brand" href="index.html">
-        <span id="logoSlot"></span><span style="font-size:24px">OpenShelf</span>
+        <img class="wordmark" src="img/logo-light.png" alt="OpenShelf" height="38">
       </a>
       <div style="display:flex;flex-direction:column;gap:20px;position:relative;z-index:1">
         <span class="admin-tag"><span id="tagIcon"></span>Admin portal</span>
@@ -60,7 +60,6 @@
     const current = OS.session.get();
     if (current && current.role === 'admin') { location.replace('dashboard.html'); return; }
 
-    $('#logoSlot').outerHTML = OS.logo(40);
     $('#tagIcon').outerHTML = OS.icon('shield', 16);
     $('#i1').outerHTML = '<span style="color:var(--primary)">' + OS.icon('users', 22) + '</span>';
     $('#i2').outerHTML = '<span style="color:var(--primary)">' + OS.icon('key', 22) + '</span>';

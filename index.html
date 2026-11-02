@@ -15,10 +15,7 @@
   <main class="hero">
     <div class="wrap">
       <nav class="nav" aria-label="Main">
-        <a class="logo" href="index.html">
-          <svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="11" fill="#0E0D14"/><path d="M11 13v14M16 11v16M21 13v14" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M25 12.5l5 13.5" stroke="#A9A5F7" stroke-width="3" stroke-linecap="round"/><path d="M9 29h22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
-          OpenShelf
-        </a>
+        <a class="logo" href="index.html"><img src="img/logo.png" alt="OpenShelf" height="30"></a>
         <a class="pill" href="login.html" data-login>Log in <span class="arr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
       </nav>
 
@@ -54,7 +51,7 @@
           <div class="chips"><span>Collections</span><span>Books</span></div>
           <h3 id="featTitle">Autumn Reads</h3>
           <p class="sub">The Most Borrowed Books</p>
-          <div class="big"><strong id="loanCount">0</strong><small>Loans</small></div>
+          <div class="big"><strong id="loanCount">0</strong><small>Borrows</small></div>
         </div>
         <ul class="grid4" id="topBooks" aria-label="Most borrowed books"></ul>
       </div>
@@ -136,7 +133,7 @@
     const notes = [
       [`${Object.keys(OS.AUDIOBOOKS).length} audiobook summaries, ready to play`, 'Listen along with highlighted read-along text'],
       [`${books.length} titles across ${cats.length - 1} subjects`, 'Search, reserve and track every due date'],
-      [`${total} loans and counting`, 'Join the students and faculty already reading']
+      [`${total} borrows and counting`, 'Join the students and faculty already reading']
     ];
     $('#notice').innerHTML = notes.map((n, i) => `<div class="notice-item" aria-hidden="${i !== 0}"><b>${esc(n[0])}</b><span>${esc(n[1])}</span></div>`).join('');
     let ni = 0;
